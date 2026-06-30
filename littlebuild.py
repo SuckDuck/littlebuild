@@ -135,9 +135,10 @@ def create_statics(statics_dir: Union[str, Path], input_files: List[Union[str, P
 
         array_name = file_path.name.replace("/", "_").replace("\\", "_").replace(".", "_").replace("-", "_")
 
-        output_file = statics_dir / (file_path.stem + ".h")
-        if not have_changed([file_path], output_file):
-            print(f"{output_file} {COLORS.BLUE}-> up to date{COLORS.RESET}")
+        output_c_file = statics_dir / (file_path.stem + ".c")
+        output_h_file = statics_dir / (file_path.stem + ".h")
+        if not have_changed([file_path], output_c_file):
+            print(f"{output_c_file} {COLORS.BLUE}-> up to date{COLORS.RESET}")
             continue
 
         try:
@@ -147,8 +148,8 @@ def create_statics(statics_dir: Union[str, Path], input_files: List[Union[str, P
             continue
 
         try:
-            print(f"{COLORS.BLUE}Creating:{COLORS.RESET} {output_file}")
-            with output_file.open("w", encoding="utf-8") as f:
+            print(f"{COLORS.BLUE}Creating:{COLORS.RESET} {output_c_file}")
+            with output_c_file.open("w", encoding="utf-8") as f:
                 f.write(f"// Generated from {file_path.name}\n")
                 f.write(f"unsigned char {array_name}[] = {{\n")
                 for i, b in enumerate(data):
@@ -160,7 +161,20 @@ def create_statics(statics_dir: Union[str, Path], input_files: List[Union[str, P
                 f.write("\n};\n\n")
                 f.write(f"unsigned int {array_name}_len = {len(data)};\n")
         except OSError as e:
-            __error(prefix=f"Error writing header file {output_file}:", log=e)
+            __error(prefix=f"Error writing static file {output_c_file}:", log=e)
+
+        try:
+            print(f"{COLORS.BLUE}Creating:{COLORS.RESET} {output_h_file}")
+            with output_h_file.open("w", encoding="utf-8") as f:
+                f.write(f"// Generated from {file_path.name}\n")
+                f.write("#ifndef "); f.write(f"{array_name}_H\n".upper())
+                f.write("#define "); f.write(f"{array_name}_H\n".upper())
+                f.write(f"extern unsigned char {array_name}[];\n")
+                f.write(f"extern unsigned int {array_name}_len;\n")
+                f.write("#endif")
+
+        except OSError as e:
+            __error(prefix=f"Error writing static file {output_h_file}:", log=e)
 
 def __build_compile_command(
     cc: str,
