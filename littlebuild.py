@@ -341,7 +341,7 @@ def link(cc:str, sources:List[str], lib_paths:List[str], links:List[str], ldflag
     """Link object files into an executable in out_dir, skipping if up-to-date."""
     
     links=" ".join(links)
-    lib_paths=" ".join(lib_paths)
+    lib_paths = " ".join(f"-L{path}" for path in lib_paths)
     ldflags=" ".join(ldflags)
 
     out_name = os.path.join(out_dir,out_name)
